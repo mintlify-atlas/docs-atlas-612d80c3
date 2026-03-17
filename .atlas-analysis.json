@@ -1,0 +1,84 @@
+{
+  "projectType": "saas",
+  "projectName": "TruequeU",
+  "projectDescription": "A peer-to-peer marketplace for university students to trade and sell items like books, electronics, and more within their campus community.",
+  "theme": "almond",
+  "primaryColor": "#747474",
+  "lightColor": "#0b0b0b",
+  "darkColor": "#b5b5b5",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": ["introduction", "getting-started/quickstart", "getting-started/account-setup"]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/listings",
+              "features/create-listing",
+              "features/messaging",
+              "features/favorites",
+              "features/profile"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/buying",
+              "guides/selling",
+              "guides/listing-categories"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "reference/data-model",
+              "reference/listing-statuses",
+              "reference/validation-rules",
+              "reference/local-storage"
+            ]
+          },
+          {
+            "group": "Development",
+            "pages": [
+              "development/setup",
+              "development/architecture",
+              "development/state-management",
+              "development/services"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Browse and search listings from the university community",
+    "Create listings with title, description, price, category, and image upload",
+    "User authentication with registration and login",
+    "Real-time peer-to-peer messaging between buyers and sellers",
+    "Favorite listings to save items of interest",
+    "Profile page with personal listing management",
+    "Listing statuses: available, reserved, and sold",
+    "Categories: Electronics, Books, Services, Other",
+    "Persistent state via localStorage using Zustand"
+  ],
+  "publicApiSurface": [
+    "validateLogin(email, password) → User | null",
+    "registerUser({ email, name, password }) → User",
+    "isEmailTaken(email) → boolean",
+    "validatePassword(password) → { valid, message }",
+    "validateListing({ title, description, price }) → ListingValidation",
+    "useStore.addListing(item: Listing)",
+    "useStore.updateStatus(id, status)",
+    "useStore.toggleFavorite(id)",
+    "useStore.login(userData: User)",
+    "useStore.logout()",
+    "useStore.setSearchQuery(query)",
+    "useStore.getOrCreateChat(listingId, listingTitle, sellerId, buyerId) → Chat",
+    "useStore.addChatMessage(chatId, senderId, text)"
+  ]
+}
