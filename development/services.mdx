@@ -1,0 +1,288 @@
+---
+title: 'Services'
+description: 'Business logic functions for authentication and listing validation.'
+---
+
+## Overview
+
+The service layer lives in `src/services/` and contains pure functions responsible for validation and business logic. Services are framework-agnostic — they do not import from the Zustand store and have no React dependencies.
+
+All services are re-exported from `src/services/index.ts`:
+
+```typescript
+export * from "./auth.service";
+export * from "./listing.service";
+```
+
+## Auth service
+
+**File:** `src/services/auth.service.ts`
+
+Handles user authentication, registration, and password validation. It reads from two data sources:
+
+1. **`src/data/users.ts`** — hardcoded seed user accounts bundled with the application.
+2. **`localStorage`** — user accounts registered at runtime, stored under the key `trueque-registered-users`.
+
+<Note>
+  Passwords are stored in plain text in `localStorage`. This is acceptable for a client-side demo application but should not be used in production.
+</Note>
+
+### `validateLogin`
+
+Attempts to authenticate a user by checking registered (`localStorage`) users first, then falling back to seed users.
+
+```typescript
+export function validateLogin(email: string, password: string): User | null
+```
+
+<ParamField path="email" type="string" required>
+  The user's email address. Compared case-insensitively after trimming whitespace.
+</ParamField>
+
+<ParamField path="password" type="string" required>
+  The user's password. Compared with strict equality.
+</ParamField>
+
+**Returns:** A `User` object (`{ id, email, name }`) on success, or `null` if no matching credentials are found.
+
+**Implementation:**
+```typescript
+export function validateLogin(email: string, password: string): User | null {
+  const stored = getStoredUsers().find(
+    (u) => u.email.toLowerCase() === email.toLowerCase().trim()
+  );
+  if (stored && stored.password === password) {
+    return { id: stored.id, email: stored.email, name: stored.name };
+  }
+
+  const fromData = users.find(
+    (u) => u.email.toLowerCase() === email.toLowerCase().trim()
+  );
+  if (fromData && fromData.password === password) {
+    return { id: fromData.id, email: fromData.email, name: fromData.name };
+  }
+  return null;
+}
+```
+
+---
+
+### `registerUser`
+
+Creates a new user account and persists it to `localStorage`.
+
+```typescript
+export function registerUser(data: {
+  email: string;
+  name: string;
+  password: string;
+}): User
+```
+
+<ParamField path="data.email" type="string" required>
+  The new user's email address. Stored lowercase and trimmed.
+</ParamField>
+
+<ParamField path="data.name" type="string" required>
+  The new user's display name. Stored trimmed.
+</ParamField>
+
+<ParamField path="data.password" type="string" required>
+  The new user's password in plain text.
+</ParamField>
+
+**Returns:** A `User` object (`{ id, email, name }`) for the newly created account. The `id` is generated as `` `u${Date.now()}` ``.
+
+**Implementation:**
+```typescript
+export function registerUser(data: {
+  email: string;
+  name: string;
+  password: string;
+}): User {
+  const list = getStoredUsers();
+  const newUser: StoredUser = {
+    id: `u${Date.now()}`,
+    email: data.email.toLowerCase().trim(),
+    name: data.name.trim(),
+    password: data.password,
+  };
+  list.push(newUser);
+  saveStoredUsers(list);
+  return { id: newUser.id, email: newUser.email, name: newUser.name };
+}
+```
+
+<Warning>
+  Always call `isEmailTaken` before `registerUser` to prevent duplicate accounts.
+</Warning>
+
+---
+
+### `isEmailTaken`
+
+Checks whether an email address is already in use, searching both seed users and localStorage-registered users.
+
+```typescript
+export function isEmailTaken(email: string): boolean
+```
+
+<ParamField path="email" type="string" required>
+  The email address to check. Compared case-insensitively.
+</ParamField>
+
+**Returns:** `true` if the email is already registered, `false` otherwise.
+
+**Implementation:**
+```typescript
+export function isEmailTaken(email: string): boolean {
+  const emailLower = email.toLowerCase().trim();
+  if (users.some((u) => u.email.toLowerCase() === emailLower)) return true;
+  return getStoredUsers().some((u) => u.email.toLowerCase() === emailLower);
+}
+```
+
+---
+
+### `validatePassword`
+
+Validates a password against the application's password policy.
+
+```typescript
+export function validatePassword(
+  password: string
+): { valid: boolean; message: string }
+```
+
+<ParamField path="password" type="string" required>
+  The password string to validate.
+</ParamField>
+
+**Returns:** An object with `valid: boolean` and `message: string`. When `valid` is `false`, `message` contains a human-readable explanation of the first rule that failed.
+
+Password rules (evaluated in order):
+
+| Rule | Requirement |
+| --- | --- |
+| Minimum length | At least 8 characters |
+| Uppercase letter | At least one `[A-Z]` character |
+| Lowercase letter | At least one `[a-z]` character |
+| Number | At least one `[0-9]` digit |
+| Special character | At least one non-alphanumeric character |
+
+**Implementation:**
+```typescript
+export function validatePassword(
+  password: string
+): { valid: boolean; message: string } {
+  if (password.length < 8)
+    return { valid: false, message: "Mínimo 8 caracteres" };
+  if (!/[A-Z]/.test(password))
+    return { valid: false, message: "Debe incluir una mayúscula" };
+  if (!/[a-z]/.test(password))
+    return { valid: false, message: "Debe incluir una minúscula" };
+  if (!/[0-9]/.test(password))
+    return { valid: false, message: "Debe incluir un número" };
+  if (!/[^a-zA-Z0-9]/.test(password))
+    return { valid: false, message: "Debe incluir un carácter especial" };
+  return { valid: true, message: "" };
+}
+```
+
+## Listing service
+
+**File:** `src/services/listing.service.ts`
+
+Validates listing form input before it is dispatched to the store.
+
+### Validation constants
+
+```typescript
+const TITLE_MIN       = 3;
+const TITLE_MAX       = 100;
+const DESCRIPTION_MIN = 10;
+const DESCRIPTION_MAX = 1000;
+const PRICE_MIN       = 0;
+const PRICE_MAX       = 999999;
+```
+
+### `validateListing`
+
+Validates the title, description, and price fields of a listing form submission.
+
+```typescript
+export interface ListingValidation {
+  valid: boolean;
+  message: string;
+}
+
+export function validateListing(data: {
+  title: string;
+  description: string;
+  price: string;
+}): ListingValidation
+```
+
+<ParamField path="data.title" type="string" required>
+  The listing title. Must be between `3` and `100` characters after trimming.
+</ParamField>
+
+<ParamField path="data.description" type="string" required>
+  The listing description. Must be between `10` and `1000` characters after trimming.
+</ParamField>
+
+<ParamField path="data.price" type="string" required>
+  The listing price as a string (as received from a form input). Converted to a number internally. Must be a valid number between `0` and `999999`.
+</ParamField>
+
+**Returns:** A `ListingValidation` object. When `valid` is `false`, `message` contains the first validation error encountered.
+
+Validation order:
+
+1. Title length (min/max)
+2. Description length (min/max)
+3. Price is a valid number
+4. Price is within range (min/max)
+
+**Implementation:**
+```typescript
+export function validateListing(data: {
+  title: string;
+  description: string;
+  price: string;
+}): ListingValidation {
+  const title = data.title.trim();
+  if (title.length < TITLE_MIN)
+    return { valid: false, message: `El título debe tener al menos ${TITLE_MIN} caracteres` };
+  if (title.length > TITLE_MAX)
+    return { valid: false, message: `El título no puede superar ${TITLE_MAX} caracteres` };
+
+  const description = data.description.trim();
+  if (description.length < DESCRIPTION_MIN)
+    return { valid: false, message: `La descripción debe tener al menos ${DESCRIPTION_MIN} caracteres` };
+  if (description.length > DESCRIPTION_MAX)
+    return { valid: false, message: `La descripción no puede superar ${DESCRIPTION_MAX} caracteres` };
+
+  const priceNum = Number(data.price);
+  if (isNaN(priceNum))
+    return { valid: false, message: "El precio debe ser un número válido" };
+  if (priceNum < PRICE_MIN)
+    return { valid: false, message: "El precio no puede ser negativo" };
+  if (priceNum > PRICE_MAX)
+    return { valid: false, message: `El precio no puede superar $${PRICE_MAX.toLocaleString()}` };
+
+  return { valid: true, message: "" };
+}
+```
+
+<Tip>
+  Both service files are re-exported from `src/services/index.ts`, so you can import from either the specific file or the barrel export:
+
+  ```typescript
+  // Barrel import (preferred)
+  import { validateLogin, validateListing } from '../services';
+
+  // Direct import
+  import { validateLogin } from '../services/auth.service';
+  ```
+</Tip>

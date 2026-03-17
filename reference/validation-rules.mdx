@@ -1,0 +1,185 @@
+---
+title: Validation rules
+description: All input validation logic for listings and passwords, with constraints and error messages.
+---
+
+TruequeU validates user input in two service files before writing anything to state or localStorage. Both are exported from `src/services/index.ts`:
+
+```typescript src/services/index.ts
+export * from "./auth.service";
+export * from "./listing.service";
+```
+
+---
+
+## Listing validation
+
+Defined in `src/services/listing.service.ts`. Call `validateListing` before creating or updating a listing.
+
+### Function signature
+
+```typescript src/services/listing.service.ts
+export interface ListingValidation {
+  valid: boolean;
+  message: string;
+}
+
+export function validateListing(data: {
+  title: string;
+  description: string;
+  price: string;
+}): ListingValidation
+```
+
+### Input parameters
+
+<ParamField body="data.title" type="string" required>
+  The listing title. Whitespace is trimmed before validation.
+</ParamField>
+
+<ParamField body="data.description" type="string" required>
+  The listing description. Whitespace is trimmed before validation.
+</ParamField>
+
+<ParamField body="data.price" type="string" required>
+  The asking price as a raw string (e.g., from a form input). Converted to a number internally via `Number()`.
+</ParamField>
+
+### Return value
+
+<ResponseField name="valid" type="boolean" required>
+  `true` if all fields pass validation, `false` otherwise.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Empty string when `valid` is `true`. A human-readable error description when `valid` is `false`.
+</ResponseField>
+
+### Rules
+
+| Field | Rule | Constraint |
+|---|---|---|
+| `title` | Minimum length | 3 characters |
+| `title` | Maximum length | 100 characters |
+| `description` | Minimum length | 10 characters |
+| `description` | Maximum length | 1000 characters |
+| `price` | Must be a number | `NaN` is rejected |
+| `price` | Minimum value | $0 (no negatives) |
+| `price` | Maximum value | $999,999 |
+
+### Validation source
+
+```typescript src/services/listing.service.ts
+const TITLE_MIN = 3;
+const TITLE_MAX = 100;
+const DESCRIPTION_MIN = 10;
+const DESCRIPTION_MAX = 1000;
+const PRICE_MIN = 0;
+const PRICE_MAX = 999999;
+
+export function validateListing(data: {
+  title: string;
+  description: string;
+  price: string;
+}): ListingValidation {
+  const title = data.title.trim();
+  if (title.length < TITLE_MIN) {
+    return { valid: false, message: `El título debe tener al menos ${TITLE_MIN} caracteres` };
+  }
+  if (title.length > TITLE_MAX) {
+    return { valid: false, message: `El título no puede superar ${TITLE_MAX} caracteres` };
+  }
+
+  const description = data.description.trim();
+  if (description.length < DESCRIPTION_MIN) {
+    return { valid: false, message: `La descripción debe tener al menos ${DESCRIPTION_MIN} caracteres` };
+  }
+  if (description.length > DESCRIPTION_MAX) {
+    return { valid: false, message: `La descripción no puede superar ${DESCRIPTION_MAX} caracteres` };
+  }
+
+  const priceNum = Number(data.price);
+  if (isNaN(priceNum)) {
+    return { valid: false, message: "El precio debe ser un número válido" };
+  }
+  if (priceNum < PRICE_MIN) {
+    return { valid: false, message: "El precio no puede ser negativo" };
+  }
+  if (priceNum > PRICE_MAX) {
+    return { valid: false, message: `El precio no puede superar $${PRICE_MAX.toLocaleString()}` };
+  }
+
+  return { valid: true, message: "" };
+}
+```
+
+---
+
+## Password validation
+
+Defined in `src/services/auth.service.ts`. Call `validatePassword` during registration before calling `registerUser`.
+
+### Function signature
+
+```typescript src/services/auth.service.ts
+export function validatePassword(
+  password: string
+): { valid: boolean; message: string }
+```
+
+### Input parameters
+
+<ParamField body="password" type="string" required>
+  The plaintext password string entered by the user.
+</ParamField>
+
+### Return value
+
+<ResponseField name="valid" type="boolean" required>
+  `true` if the password meets all requirements, `false` otherwise.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Empty string when `valid` is `true`. A human-readable error description when `valid` is `false`. Only the first failing rule is reported.
+</ResponseField>
+
+### Rules
+
+All rules must pass for `valid` to be `true`. Rules are evaluated in order and the first failure is returned.
+
+| Rule | Requirement | Regex |
+|---|---|---|
+| Minimum length | At least 8 characters | `password.length >= 8` |
+| Uppercase letter | At least one `A–Z` character | `/[A-Z]/` |
+| Lowercase letter | At least one `a–z` character | `/[a-z]/` |
+| Number | At least one digit `0–9` | `/[0-9]/` |
+| Special character | At least one non-alphanumeric character | `/[^a-zA-Z0-9]/` |
+
+### Validation source
+
+```typescript src/services/auth.service.ts
+export function validatePassword(
+  password: string
+): { valid: boolean; message: string } {
+  if (password.length < 8) {
+    return { valid: false, message: "Mínimo 8 caracteres" };
+  }
+  if (!/[A-Z]/.test(password)) {
+    return { valid: false, message: "Debe incluir una mayúscula" };
+  }
+  if (!/[a-z]/.test(password)) {
+    return { valid: false, message: "Debe incluir una minúscula" };
+  }
+  if (!/[0-9]/.test(password)) {
+    return { valid: false, message: "Debe incluir un número" };
+  }
+  if (!/[^a-zA-Z0-9]/.test(password)) {
+    return { valid: false, message: "Debe incluir un carácter especial" };
+  }
+  return { valid: true, message: "" };
+}
+```
+
+<Tip>
+  Validate passwords client-side with `validatePassword` before submitting the registration form. This prevents unnecessary calls to `registerUser` and gives immediate feedback to the user.
+</Tip>

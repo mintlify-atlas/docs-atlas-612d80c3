@@ -1,0 +1,128 @@
+---
+title: Local storage
+description: How TruequeU persists application state across page reloads using Zustand's persist middleware and the browser's localStorage API.
+---
+
+TruequeU is a fully client-side application with no backend. All data is stored in the browser using the Web Storage API (`localStorage`). Two distinct storage keys are used — one for the Zustand store and one for registered user credentials.
+
+---
+
+## Zustand persist middleware
+
+The global store in `src/store/useStore.ts` uses Zustand's `persist` middleware to automatically sync a subset of state to localStorage:
+
+```typescript src/store/useStore.ts
+export const useStore = create<StoreState>()(
+  persist(
+    (set, get) => ({ /* store actions */ }),
+    {
+      name: 'marketplace-storage',
+      partialize: (state) => ({
+        listings: state.listings,
+        user: state.user,
+        chats: state.chats,
+      }),
+    }
+  )
+);
+```
+
+### Storage key
+
+| Key | Value |
+|---|---|
+| `marketplace-storage` | JSON-serialized object containing `listings`, `user`, and `chats` |
+
+### Persisted fields
+
+<ResponseField name="listings" type="Listing[]" required>
+  The full array of listings created during the session. Persists across reloads so users can see their posted items without a backend.
+</ResponseField>
+
+<ResponseField name="user" type="User | null" required>
+  The currently authenticated user object. When `null`, the user is logged out. This field is what determines whether a session is active.
+</ResponseField>
+
+<ResponseField name="chats" type="Record<string, Chat>" required>
+  All chat threads keyed by chat ID (`` `{listingId}-{buyerId}` ``). Chat history survives page reloads.
+</ResponseField>
+
+### Non-persisted fields
+
+The following state fields are **not** written to localStorage:
+
+| Field | Reason |
+|---|---|
+| `searchQuery` | Transient UI state — intentionally reset on reload |
+
+---
+
+## Registered users storage
+
+User credentials registered through the sign-up form are stored separately from the Zustand state, in `src/services/auth.service.ts`:
+
+```typescript src/services/auth.service.ts
+const STORAGE_KEY = "trueque-registered-users";
+
+interface StoredUser extends User {
+  password: string;
+}
+
+function getStoredUsers(): StoredUser[] {
+  try {
+    const data = localStorage.getItem(STORAGE_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveStoredUsers(list: StoredUser[]): void {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+}
+```
+
+| Key | Value |
+|---|---|
+| `trueque-registered-users` | JSON array of `StoredUser` objects including hashed passwords |
+
+<Warning>
+  Passwords are stored as plaintext strings in `trueque-registered-users`. This is acceptable for a local demo application but must not be used in a production environment. Always hash passwords server-side before storage.
+</Warning>
+
+---
+
+## What clears on logout
+
+Calling `logout()` in the store runs:
+
+```typescript src/store/useStore.ts
+logout: () => set({ user: null }),
+```
+
+This sets `user` to `null` in memory and the persist middleware writes the updated state (with `user: null`) back to `marketplace-storage`.
+
+| Field | Cleared on logout? |
+|---|---|
+| `user` | Yes — set to `null` |
+| `listings` | No — listings remain in localStorage |
+| `chats` | No — chat history remains in localStorage |
+| `trueque-registered-users` | No — registered accounts are never removed |
+
+<Note>
+  Because `listings` and `chats` are not cleared on logout, data created in one session is visible to the next user who logs in on the same browser. This is expected behavior for a shared-device campus application, but worth noting when testing.
+</Note>
+
+---
+
+## Browser compatibility
+
+TruequeU requires `localStorage` to be available and writable. The application will not function correctly in the following scenarios:
+
+- **Private/incognito mode** — Some browsers restrict or disable `localStorage` in private browsing. The `getStoredUsers` function catches the resulting exception and returns an empty array, but persisted listings and chats will not survive reloads.
+- **Storage quota exceeded** — If the browser's storage quota is reached, writes silently fail. This can happen if many large base64-encoded images are attached to listings.
+- **Third-party cookie/storage blocking** — Browser extensions or strict privacy settings that block storage access will cause the same behavior as private mode.
+
+<Tip>
+  To reset all TruequeU data during development, open your browser's DevTools, go to **Application → Storage → Local Storage**, and delete both `marketplace-storage` and `trueque-registered-users`.
+</Tip>

@@ -1,0 +1,109 @@
+---
+title: 'Selling on TruequeU'
+description: 'Create listings, respond to buyers, and manage your sales from start to finish.'
+---
+
+Selling on TruequeU takes a few minutes. This guide covers everything from setting up your account to marking a listing as sold.
+
+## Before you start: set up your account
+
+You must be logged in to create a listing. Navigate to `/login` and sign in with your university credentials. Your email domain is displayed publicly on your listings, so buyers can verify you are a fellow student.
+
+<Note>
+  If you are not logged in, the Create Listing page shows a prompt redirecting you to `/login`. You cannot publish without an active session.
+</Note>
+
+## Creating a great listing
+
+<Steps>
+  <Step title="Navigate to Create Listing">
+    Click the **Create Listing** link in the navigation. You are taken to the listing form at `/create`.
+  </Step>
+
+  <Step title="Write a clear title">
+    The title is the first thing buyers see in search results and listing cards. Keep it specific and descriptive.
+
+    <Tip>
+      Include the brand, model, and edition where applicable. **"Calculus Stewart 8th Edition"** outperforms **"Math book"** every time. Titles must be between 3 and 100 characters.
+    </Tip>
+  </Step>
+
+  <Step title="Set your price">
+    Enter a price in USD. The field accepts values from $0 (free) to $999,999. Set a fair asking price — check what similar items are listed for on the platform first.
+
+    <Tip>
+      Pricing slightly above your minimum gives room to negotiate. Buyers often make offers below the asking price.
+    </Tip>
+  </Step>
+
+  <Step title="Choose the right category">
+    Select one of the four available categories:
+
+    - **Electronics** — devices, peripherals, and tech accessories
+    - **Books** — textbooks, study guides, and course materials
+    - **Services** — tutoring, proofreading, transport, and other skills
+    - **Other** — furniture, clothing, appliances, and anything else
+
+    Choosing the correct category helps buyers find your listing when browsing.
+  </Step>
+
+  <Step title="Write a thorough description">
+    The description field accepts between 10 and 1,000 characters. Cover:
+
+    - Current condition (new, like new, good, worn)
+    - Why you are selling or trading
+    - What is included (cables, cases, accessories)
+    - Any damage or defects — buyers will notice if you hide them
+    - Whether you are open to trades or offers
+
+    <Tip>
+      Mentioning trade preferences upfront (e.g., *"Open to swap for a laptop stand or similar"*) saves time in chat negotiations.
+    </Tip>
+  </Step>
+
+  <Step title="Upload a photo">
+    Click **Browse files** or drag an image onto the upload area. A real photo of the actual item builds buyer trust far more than a stock image. Accepted formats are standard image files (`image/*`).
+
+    <Warning>
+      If you skip the photo, a placeholder image is used. Listings without real photos receive significantly less interest.
+    </Warning>
+  </Step>
+
+  <Step title="Publish your listing">
+    Click **Publish Listing**. The form validates your inputs — if the title, description, or price fails validation, an error message appears at the top of the form. On success, you are redirected to the listings page and your item appears immediately.
+  </Step>
+</Steps>
+
+## Responding to buyers via chat
+
+When a buyer contacts you from your listing detail page, a chat thread is created at `/chat`. You will see it listed in your **Messages** sidebar the next time you visit the chat page.
+
+- Reply promptly. Buyers often message multiple sellers simultaneously.
+- Be direct about the item's condition if asked follow-up questions.
+- Confirm meeting location, time, and payment method in the chat before agreeing to meet.
+
+<Warning>
+  Do not agree to ship items or accept payment outside the platform's direct communication channel. TruequeU is designed for in-person campus transactions only.
+</Warning>
+
+## Updating listing status
+
+As your sale progresses, keep the status current so other buyers know where things stand. The `updateStatus` function in the store transitions a listing through three states:
+
+| Status | When to use |
+|---|---|
+| `available` | Default on creation. Item is open for new inquiries. |
+| `reserved` | You are actively negotiating with a specific buyer. Reduces incoming messages from others. |
+| `sold` | Transaction complete. Item is no longer available. |
+
+<Note>
+  Status updates apply only to listings you created yourself (listings added via `addListing` to the store). The seeded platform items cannot be updated.
+</Note>
+
+## Managing your listings from your profile
+
+Your profile sidebar on the listings page shows your account information. All listings tied to your `ownerId` appear in the main listings feed. To review or update them, browse the listings page and look for items with your display name in the seller card on the detail page.
+
+<Tip>
+  Once a listing is sold, consider creating a new one for your next item. Active listings with accurate statuses keep the marketplace trustworthy for everyone.
+</Tip>

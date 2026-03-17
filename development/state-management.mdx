@@ -1,0 +1,319 @@
+---
+title: 'State management'
+description: 'Zustand store structure, persisted slices, and all available actions.'
+---
+
+## Overview
+
+TruequeU uses a single [Zustand](https://zustand.docs.pmnd.rs) store defined in `src/store/useStore.ts`. The `persist` middleware automatically synchronises selected state slices to `localStorage`, so data survives page refreshes.
+
+## Store setup
+
+```typescript
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import type { Listing, User } from '../types.ts';
+
+export const useStore = create<StoreState>()(
+  persist(
+    (set, get) => ({ /* actions */ }),
+    {
+      name: 'marketplace-storage',
+      partialize: (state) => ({
+        listings: state.listings,
+        user: state.user,
+        chats: state.chats,
+      }),
+    }
+  )
+);
+```
+
+| Setting | Value |
+| --- | --- |
+| Storage key | `marketplace-storage` |
+| Storage backend | `localStorage` |
+| Persisted slices | `listings`, `user`, `chats` |
+| Non-persisted slices | `searchQuery` |
+
+## State shape
+
+```typescript
+interface StoreState {
+  listings: Listing[];
+  user: User | null;
+  searchQuery: string;
+  chats: Record<string, Chat>;
+
+  // Listing actions
+  addListing: (item: Listing) => void;
+  updateStatus: (id: string, status: Listing['status']) => void;
+  toggleFavorite: (id: string) => void;
+
+  // Auth actions
+  login: (userData: User) => void;
+  logout: () => void;
+
+  // UI actions
+  setSearchQuery: (query: string) => void;
+
+  // Chat actions
+  getOrCreateChat: (
+    listingId: string,
+    listingTitle: string,
+    sellerId: string,
+    buyerId: string
+  ) => Chat;
+  addChatMessage: (chatId: string, senderId: string, text: string) => void;
+}
+```
+
+## Data types
+
+```typescript
+export interface ChatMessage {
+  id: string;       // Format: `msg-${Date.now()}`
+  senderId: string;
+  text: string;
+  time: string;     // Locale time string (HH:MM)
+}
+
+export interface Chat {
+  id: string;           // Format: `{listingId}-{buyerId}`
+  listingId: string;
+  listingTitle: string;
+  sellerId: string;
+  buyerId: string;
+  messages: ChatMessage[];
+}
+```
+
+## Listing actions
+
+### `addListing`
+
+Prepends a new listing to the `listings` array.
+
+```typescript
+addListing: (item: Listing) => void
+```
+
+<ParamField path="item" type="Listing" required>
+  The complete `Listing` object to add. The listing is inserted at the beginning of the array so it appears first in the UI.
+</ParamField>
+
+**Implementation:**
+```typescript
+addListing: (item) =>
+  set((state) => ({
+    listings: [item, ...state.listings],
+  })),
+```
+
+---
+
+### `updateStatus`
+
+Updates the `status` field of a specific listing.
+
+```typescript
+updateStatus: (id: string, status: Listing['status']) => void
+```
+
+<ParamField path="id" type="string" required>
+  The `id` of the listing to update.
+</ParamField>
+
+<ParamField path="status" type="ListingStatus" required>
+  The new status value. Must be one of `"available"`, `"reserved"`, or `"sold"`.
+</ParamField>
+
+**Implementation:**
+```typescript
+updateStatus: (id, status) =>
+  set((state) => ({
+    listings: state.listings.map((l) =>
+      l.id === id ? { ...l, status } : l
+    ),
+  })),
+```
+
+---
+
+### `toggleFavorite`
+
+Toggles the `isFavorite` boolean on a listing.
+
+```typescript
+toggleFavorite: (id: string) => void
+```
+
+<ParamField path="id" type="string" required>
+  The `id` of the listing whose `isFavorite` flag should be toggled.
+</ParamField>
+
+**Implementation:**
+```typescript
+toggleFavorite: (id) =>
+  set((state) => ({
+    listings: state.listings.map((l) =>
+      l.id === id ? { ...l, isFavorite: !l.isFavorite } : l
+    ),
+  })),
+```
+
+## Auth actions
+
+### `login`
+
+Sets the authenticated user in the store.
+
+```typescript
+login: (userData: User) => void
+```
+
+<ParamField path="userData" type="User" required>
+  The `User` object to store. The `User` type has fields `id: string`, `email: string`, and `name: string`.
+</ParamField>
+
+---
+
+### `logout`
+
+Clears the authenticated user, setting `user` to `null`.
+
+```typescript
+logout: () => void
+```
+
+No parameters. Because `user` is a persisted slice, this also removes the user from `localStorage`.
+
+## UI actions
+
+### `setSearchQuery`
+
+Updates the active search query string. This slice is **not** persisted to `localStorage`.
+
+```typescript
+setSearchQuery: (query: string) => void
+```
+
+<ParamField path="query" type="string" required>
+  The search string to store. Pass an empty string to clear the query.
+</ParamField>
+
+## Chat actions
+
+### `getOrCreateChat`
+
+Returns an existing chat thread or creates a new one. The chat ID is derived deterministically from the listing and buyer, so calling this multiple times with the same arguments always returns the same chat.
+
+```typescript
+getOrCreateChat: (
+  listingId: string,
+  listingTitle: string,
+  sellerId: string,
+  buyerId: string
+) => Chat
+```
+
+<ParamField path="listingId" type="string" required>
+  The ID of the listing this conversation is about.
+</ParamField>
+
+<ParamField path="listingTitle" type="string" required>
+  The human-readable title of the listing, stored on the chat for display purposes.
+</ParamField>
+
+<ParamField path="sellerId" type="string" required>
+  The user ID of the listing owner.
+</ParamField>
+
+<ParamField path="buyerId" type="string" required>
+  The user ID of the buyer initiating the conversation.
+</ParamField>
+
+**Chat ID format:** `{listingId}-{buyerId}`
+
+**Implementation:**
+```typescript
+getOrCreateChat: (listingId, listingTitle, sellerId, buyerId) => {
+  const chatId = `${listingId}-${buyerId}`;
+  const existing = get().chats[chatId];
+  if (existing) return existing;
+  const chat: Chat = {
+    id: chatId,
+    listingId,
+    listingTitle,
+    sellerId,
+    buyerId,
+    messages: [],
+  };
+  set((s) => ({ chats: { ...s.chats, [chatId]: chat } }));
+  return chat;
+},
+```
+
+---
+
+### `addChatMessage`
+
+Appends a new message to an existing chat thread. No-ops silently if `chatId` does not exist.
+
+```typescript
+addChatMessage: (chatId: string, senderId: string, text: string) => void
+```
+
+<ParamField path="chatId" type="string" required>
+  The ID of the chat to append the message to.
+</ParamField>
+
+<ParamField path="senderId" type="string" required>
+  The user ID of the message author.
+</ParamField>
+
+<ParamField path="text" type="string" required>
+  The message body text.
+</ParamField>
+
+The `id` for each message is generated as `` `msg-${Date.now()}` `` and the `time` field is formatted as a locale time string (`HH:MM`).
+
+**Implementation:**
+```typescript
+addChatMessage: (chatId, senderId, text) => {
+  const chat = get().chats[chatId];
+  if (!chat) return;
+  const msg: ChatMessage = {
+    id: `msg-${Date.now()}`,
+    senderId,
+    text,
+    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+  };
+  set((s) => ({
+    chats: {
+      ...s.chats,
+      [chatId]: { ...chat, messages: [...chat.messages, msg] },
+    },
+  }));
+},
+```
+
+## Usage example
+
+```typescript
+import { useStore } from '../store/useStore';
+
+function MyComponent() {
+  const { user, listings, login, logout, addListing } = useStore();
+
+  // ...
+}
+```
+
+<Tip>
+  Use selector functions to subscribe only to the state you need and avoid unnecessary re-renders:
+
+  ```typescript
+  const listings = useStore((s) => s.listings);
+  ```
+</Tip>

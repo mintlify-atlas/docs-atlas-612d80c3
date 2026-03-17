@@ -1,0 +1,98 @@
+---
+title: 'Setup'
+description: 'Get TruequeU running locally for development.'
+---
+
+## Prerequisites
+
+Before you begin, make sure you have the following installed:
+
+- **Node.js** v18 or later
+- **npm**, **yarn**, or **pnpm**
+- **Git**
+
+<Note>
+  TruequeU is a pure client-side application. No backend, database, or external service account is required to run it locally.
+</Note>
+
+## Installation
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/DuqueJR/TruequeU.git
+    cd TruequeU
+    ```
+  </Step>
+
+  <Step title="Install dependencies">
+    <CodeGroup>
+
+    ```bash npm
+    npm install
+    ```
+
+    ```bash yarn
+    yarn install
+    ```
+
+    ```bash pnpm
+    pnpm install
+    ```
+
+    </CodeGroup>
+  </Step>
+
+  <Step title="Start the development server">
+    <CodeGroup>
+
+    ```bash npm
+    npm run dev
+    ```
+
+    ```bash yarn
+    yarn dev
+    ```
+
+    ```bash pnpm
+    pnpm dev
+    ```
+
+    </CodeGroup>
+
+    Vite starts a local server with Hot Module Replacement (HMR) enabled. The app is available at `http://localhost:5173` by default.
+  </Step>
+</Steps>
+
+## Available scripts
+
+| Script | Command | Description |
+| --- | --- | --- |
+| Dev server | `npm run dev` | Starts Vite dev server with HMR |
+| Build | `npm run build` | Runs `tsc -b` then `vite build` |
+| Preview | `npm run preview` | Serves the production build locally |
+| Lint | `npm run lint` | Runs ESLint across all source files |
+
+## Building for production
+
+```bash
+npm run build
+```
+
+The build command runs TypeScript type-checking (`tsc -b`) first, then bundles the application with Vite. Output is written to the `dist/` directory.
+
+<Tip>
+  Use `npm run preview` to verify the production build locally before deploying. This serves the `dist/` directory using Vite's built-in preview server.
+</Tip>
+
+## Linting
+
+```bash
+npm run lint
+```
+
+The project uses ESLint with `typescript-eslint`, `eslint-plugin-react-hooks`, and `eslint-plugin-react-refresh`. TypeScript is configured in strict mode with `noUnusedLocals` and `noUnusedParameters` enabled.
+
+<Warning>
+  The build will fail if TypeScript errors are present. Run `npm run lint` and resolve all errors before submitting a pull request.
+</Warning>

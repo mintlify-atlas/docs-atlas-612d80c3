@@ -1,0 +1,85 @@
+---
+title: 'Quickstart'
+description: 'Go from zero to making your first listing on TruequeU in minutes.'
+---
+
+TruequeU is a peer-to-peer marketplace for university students to trade and sell items on campus. This guide walks you through opening the app, creating an account, and publishing your first listing.
+
+<Steps>
+  <Step title="Open the app">
+    Navigate to the TruequeU app in your browser. You will land on the home page, which displays featured listings from students on your campus.
+
+    If you already have an account, select **Sign In** in the navigation bar to log in and skip to step 3.
+  </Step>
+
+  <Step title="Create an account">
+    Select **Create one now** on the login page, or navigate directly to `/signup`.
+
+    Fill in the registration form with the following fields:
+
+    | Field | Description |
+    |---|---|
+    | **Full Name** | Your real name as it will appear to other students. |
+    | **University Email** | Your institutional email address (e.g. `user@uni.edu`). |
+    | **Major / Faculty** | Your area of study (e.g. `Engineering`). |
+    | **Password** | A strong password that meets the requirements below. |
+    | **Confirm password** | Re-enter your password to verify it matches. |
+
+    <Note>
+      Your password must be at least 8 characters long and include all of the following:
+      - 1 uppercase letter (A–Z)
+      - 1 lowercase letter (a–z)
+      - 1 number (0–9)
+      - 1 special character (e.g. `!`, `@`, `#`, `$`)
+
+      Example of a valid password: `Juan123!`
+    </Note>
+
+    Select **Create Account**. You will be logged in automatically and redirected to the home page.
+  </Step>
+
+  <Step title="Browse existing listings">
+    From the home page, select **Listings** in the navigation bar to view all available items.
+
+    Use the search bar to filter listings by keyword. Each listing card shows the item title, price, category, and availability status (`available`, `reserved`, or `sold`).
+
+    Select any listing card to open its detail page and see the full description, images, and seller information.
+  </Step>
+
+  <Step title="Create your first listing">
+    Select **Sell** or navigate to `/create` to open the listing creation form.
+
+    Provide the following details for your item:
+
+    | Field | Description |
+    |---|---|
+    | **title** | A short, descriptive name for the item. |
+    | **description** | Details about condition, size, age, or anything relevant. |
+    | **price** | The amount you want to receive (numeric). |
+    | **category** | The category that best fits the item. |
+    | **images** | One or more photos of the item. |
+
+    New listings are published with a status of `available` and appear at the top of the listings feed immediately.
+  </Step>
+
+  <Step title="Contact a seller">
+    To reach out about a listing you are interested in, open the listing detail page and select **Contact seller**.
+
+    This opens a private chat between you (the buyer) and the seller, linked to that specific listing. Type your message and press **Send**. The seller will be notified and can reply from their chat inbox at `/chat`.
+
+    <Note>
+      You must be logged in to contact a seller. If you are not logged in, you will be redirected to the login page.
+    </Note>
+  </Step>
+</Steps>
+
+## What's next
+
+<CardGroup cols={2}>
+  <Card title="Account setup" icon="user" href="/getting-started/account-setup">
+    Learn more about managing your profile, updating your password, and signing out.
+  </Card>
+  <Card title="Browse listings" icon="tag" href="/features/listings">
+    Explore all items currently available for trade or sale on your campus.
+  </Card>
+</CardGroup>

@@ -1,0 +1,87 @@
+---
+title: "Listings"
+description: "Browse, search, and explore items posted by the TruequeU campus community."
+---
+
+The listings page is the main marketplace view in TruequeU. It displays all items posted by the community — both seeded items and any listings you or other users have created — and lets you search across all of them in real time.
+
+## Browsing listings
+
+Navigate to the **All listings** page to see every available item. Listings are shown in a responsive grid (1 to 4 columns depending on screen width). A sidebar on the right shows your profile summary.
+
+Each listing card displays:
+
+- **Product image** — the first image from the listing's image array, or a placeholder if none was uploaded
+- **Title** — the item name, truncated to one line
+- **Price** — formatted with `$` and thousands separators
+- **Status badge** — overlaid on the image in the top-left corner
+- **Seller ID** — shown below the title as `@ownerId`
+- **Chat button** — opens a conversation with the seller
+- **Details button** — navigates to the full listing detail page
+
+## Search
+
+The search bar in the navigation filters listings in real time. The query is stored in the global `searchQuery` state via Zustand (`useStore`). The listings page reads this value and filters all items whose `title` contains the query string (case-insensitive).
+
+```ts
+const filteredListings = listings.filter((item) =>
+  item.title.toLowerCase().includes(searchQuery.toLowerCase())
+);
+```
+
+If the search returns no results, the page shows:
+
+> "No listings match your search. Try adjusting your search terms."
+
+If there are no listings at all, it shows:
+
+> "There are no listings yet. Be the first to create one!"
+
+## Listing status badges
+
+Every listing has a `status` field of type `ListingStatus`. The badge is displayed on the listing card image.
+
+| Status | Meaning |
+|---|---|
+| `available` | The item is still for sale or trade |
+| `reserved` | The item is being held for a buyer |
+| `sold` | The transaction is complete |
+
+## Categories
+
+The create-listing form exposes four categories you can filter or browse by:
+
+<CardGroup cols={2}>
+  <Card title="Electronics" icon="microchip">
+    Calculators, monitors, keyboards, hubs, and other devices
+  </Card>
+  <Card title="Books" icon="book">
+    Textbooks, programming guides, and course materials
+  </Card>
+  <Card title="Services" icon="hand-holding">
+    Tutoring, repairs, or other student-offered services
+  </Card>
+  <Card title="Other" icon="box">
+    Anything that doesn't fit the above categories
+  </Card>
+</CardGroup>
+
+<Note>
+  Seeded items in `src/data/items.ts` use additional category strings such as `furniture`, `accessories`, `study`, and `appliances`. These appear in existing cards but are not selectable when creating a new listing.
+</Note>
+
+## Listing detail page
+
+Clicking **Details** on any card opens `/listing/:id`. This page shows:
+
+- An image gallery with thumbnail navigation
+- Full title, category, price, and status
+- Full description
+- A seller card with avatar (from DiceBear), name, and campus (domain from email)
+- A **Contact Seller** button and a **Make an Offer** button
+
+The **Contact Seller** button routes to `/chat/{listingId}-{userId}` if you are logged in, or to `/login` if you are not. If you are the listing owner, the button routes to `/chat` instead.
+
+<Tip>
+  You can navigate back to all listings from the detail page using the **Back to Listings** link at the top.
+</Tip>

@@ -1,0 +1,99 @@
+---
+title: "Create a listing"
+description: "Post an item for sale or trade on TruequeU by filling out the listing form."
+---
+
+Creating a listing makes your item visible to the entire campus community. The form is available at `/create` and requires you to be logged in.
+
+<Warning>
+  You must be signed in to create a listing. If you visit `/create` without an active session, you will see a prompt to log in.
+</Warning>
+
+## Form walkthrough
+
+<Steps>
+  <Step title="Enter an item title">
+    Type a short, descriptive name for your item in the **Item Title** field.
+
+    - Minimum: 3 characters
+    - Maximum: 100 characters
+    - Example: `Calculus Stewart 8th Edition`
+  </Step>
+
+  <Step title="Set a price">
+    Enter a numeric price in the **Price ($)** field.
+
+    - Minimum: `$0` (free items are allowed)
+    - Maximum: `$999,999`
+    - Accepts decimals (step of `0.01`)
+  </Step>
+
+  <Step title="Choose a category">
+    Select one of the four available categories from the **Category** dropdown:
+
+    - **Electronics**
+    - **Books**
+    - **Services**
+    - **Other**
+
+    The default selection is **Electronics**.
+  </Step>
+
+  <Step title="Write a description">
+    Describe the item's condition, your reasons for selling, and any other relevant details in the **Description** field.
+
+    - Minimum: 10 characters
+    - Maximum: 1,000 characters
+  </Step>
+
+  <Step title="Upload an image">
+    Click **Browse files** or drag and drop an image onto the upload area. The image is read as a base64 data URL and stored with the listing.
+
+    If you skip this step, TruequeU uses a placeholder image (`https://via.placeholder.com/400`).
+
+    To remove an uploaded image, click the red **✕** button in the top-right corner of the preview.
+  </Step>
+
+  <Step title="Publish the listing">
+    Click **Publish Listing** to submit the form. TruequeU validates all fields before saving.
+
+    On success, the new listing is added to the global store and you are redirected to the home page (`/`).
+  </Step>
+</Steps>
+
+## Validation rules
+
+Validation is handled by `validateListing` in `src/services/listing.service.ts`. The rules are applied in order — the first failing rule stops submission and displays an error message.
+
+| Field | Rule | Error condition |
+|---|---|---|
+| Title | At least 3 characters (after trimming whitespace) | Fewer than 3 characters |
+| Title | No more than 100 characters | More than 100 characters |
+| Description | At least 10 characters (after trimming whitespace) | Fewer than 10 characters |
+| Description | No more than 1,000 characters | More than 1,000 characters |
+| Price | Must be a valid number | Non-numeric input |
+| Price | Cannot be negative | Value below `0` |
+| Price | Cannot exceed $999,999 | Value above `999999` |
+
+Errors appear as a highlighted message above the form. Changing any input clears the current error.
+
+## What happens after publishing
+
+When the form passes validation, TruequeU:
+
+1. Generates a unique listing ID using `listing-${Date.now()}`
+2. Sets the status to `available`
+3. Sets `isFavorite` to `false`
+4. Calls `addListing` on the Zustand store, prepending the new listing to the `listings` array
+5. Navigates you to `/` (the home page)
+
+<Note>
+  New listings created through the form are stored in Zustand and persisted to `localStorage` under the key `marketplace-storage`. They appear alongside seeded items from `src/data/items.ts` on the listings page.
+</Note>
+
+## Navigating to the form
+
+You can reach the create-listing page from:
+
+- The **+ New Listing** button on your [profile page](/features/profile)
+- Navigating directly to `/create`

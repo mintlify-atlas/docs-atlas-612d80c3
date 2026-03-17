@@ -1,0 +1,108 @@
+---
+title: 'Account setup'
+description: 'Create your TruequeU account, set a strong password, sign in, and manage your session.'
+---
+
+This guide covers everything related to your TruequeU account: signing up, understanding password requirements, logging in, and signing out.
+
+## Sign up
+
+<Steps>
+  <Step title="Go to the sign-up page">
+    Navigate to `/signup` or select **Create one now** from the login page.
+  </Step>
+
+  <Step title="Fill in your details">
+    The registration form has the following fields:
+
+    | Field | Input name | Required | Notes |
+    |---|---|---|---|
+    | Full Name | `fullName` | Yes | Your display name shown to other students. |
+    | University Email | `email` | Yes | Must be a valid email address. Each address can only be registered once. |
+    | Major / Faculty | `major` | Yes | Your field of study (e.g. `Engineering`). |
+    | Password | `password` | Yes | Must meet the password requirements below. |
+    | Confirm password | `confirmPassword` | Yes | Must exactly match the value entered in the Password field. |
+  </Step>
+
+  <Step title="Choose a strong password">
+    TruequeU validates your password before creating your account. The `validatePassword` function enforces the following rules:
+
+    - Minimum **8 characters**
+    - At least **1 uppercase letter** (A–Z)
+    - At least **1 lowercase letter** (a–z)
+    - At least **1 number** (0–9)
+    - At least **1 special character** — any character that is not a letter or number (e.g. `!`, `@`, `#`, `$`, `%`)
+
+    <Warning>
+      All five rules must be satisfied simultaneously. If any rule is not met, the form will display an error and your account will not be created. Double-check your password before submitting.
+    </Warning>
+
+    <Tip>
+      A passphrase-style password such as `Campus42!Trade` is easier to remember and satisfies every requirement: it exceeds 8 characters, contains uppercase and lowercase letters, a number, and a special character.
+    </Tip>
+  </Step>
+
+  <Step title="Submit the form">
+    Select **Create Account**.
+
+    If the email address is already registered, the form will display an error and you will need to use a different address or sign in to your existing account.
+
+    On success, you are logged in automatically and redirected to the home page.
+  </Step>
+</Steps>
+
+## Password requirements reference
+
+The following table summarises every rule enforced by `validatePassword` in `auth.service.ts`:
+
+| Rule | Requirement |
+|---|---|
+| Minimum length | 8 characters |
+| Uppercase letter | At least 1 character matching `[A-Z]` |
+| Lowercase letter | At least 1 character matching `[a-z]` |
+| Number | At least 1 character matching `[0-9]` |
+| Special character | At least 1 character that is not a letter or number (`[^a-zA-Z0-9]`) |
+
+## Log in
+
+<Steps>
+  <Step title="Go to the login page">
+    Navigate to `/login` or select **Sign In** in the navigation bar.
+  </Step>
+
+  <Step title="Enter your credentials">
+    The login form has two fields:
+
+    | Field | Description |
+    |---|---|
+    | **Email Address** | The university email you registered with. |
+    | **Password** | Your account password. |
+
+    Select **Sign In**.
+
+    <Tip>
+      You can also sign in with your **University Microsoft Account** using the button below the form. This is the fastest option if your institution uses Microsoft 365.
+    </Tip>
+  </Step>
+
+  <Step title="Successful login">
+    On a successful login, you are redirected to the home page (`/`). TruequeU stores your session in the browser using `localStorage` under the key `marketplace-storage`, so you remain logged in across page refreshes.
+
+    From the navigation bar you can access:
+    - **Profile** (`/profile`) — view and manage your account details.
+    - **Chat** (`/chat`) — read and reply to messages from buyers or sellers.
+    - **Sell** (`/create`) — publish a new listing.
+  </Step>
+</Steps>
+
+<Info>
+  If your email or password is incorrect, the login form will display: *"Email o contraseña incorrectos. Regístrate si no tienes cuenta."* Check your credentials and try again, or create a new account if you have not registered yet.
+</Info>
+
+## Sign out
+
+To sign out, open your **Profile** page at `/profile` and select the sign-out option. This clears the `user` state from the store, ending your session. You will need to sign in again to access protected features such as creating listings or contacting sellers.
+
+<Warning>
+  Signing out does not delete your account or your listings. Your data is retained in `localStorage` and will be available the next time you sign in.
+</Warning>

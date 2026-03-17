@@ -1,0 +1,65 @@
+---
+title: "Favorites"
+description: "Save listings you're interested in so you can find them again later."
+---
+
+The favorites feature lets you mark listings you want to revisit. Every listing has an `isFavorite` boolean field, and you can toggle it directly from a listing card.
+
+## How favorites work
+
+The `isFavorite` field is part of the `Listing` type defined in `src/types.ts`:
+
+```ts
+export interface Listing {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  category: string;
+  status: ListingStatus;
+  images: string[];
+  ownerId: string;
+  isFavorite: boolean;
+}
+```
+
+New listings created through the form always start with `isFavorite: false`.
+
+## Toggling a favorite
+
+The `toggleFavorite(id)` action is available on the Zustand store. It flips the `isFavorite` value for the listing with the matching `id`:
+
+```ts
+toggleFavorite: (id) =>
+  set((state) => ({
+    listings: state.listings.map((l) =>
+      l.id === id ? { ...l, isFavorite: !l.isFavorite } : l
+    ),
+  })),
+```
+
+The **♥** button on each listing card calls this action. The button is located in the top-right corner of the card image.
+
+<Note>
+  Favoriting is currently only supported for listings stored in the Zustand `listings` array — that is, listings you or other users created during the session. Seeded items from `src/data/items.ts` are not stored in the Zustand array and cannot be toggled as favorites.
+</Note>
+
+## Persistence
+
+Favorites persist across page refreshes. The Zustand store is configured with the `persist` middleware, which serializes the `listings` array (including `isFavorite` values) to `localStorage` under the key `marketplace-storage`.
+
+```ts
+persist(
+  // ...,
+  {
+    name: 'marketplace-storage',
+    partialize: (state) => ({ listings: state.listings, user: state.user, chats: state.chats }),
+  }
+)
+```
+
+This means your favorites are saved automatically and will still be marked after you close and reopen the browser.
+
+<Tip>
+  Clearing your browser's localStorage will reset all favorites along with your listings and chat history.
+</Tip>

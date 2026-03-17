@@ -1,0 +1,88 @@
+---
+title: "Messaging"
+description: "Chat directly with buyers and sellers about a listing using TruequeU's built-in messaging system."
+---
+
+TruequeU includes a built-in chat system that lets buyers and sellers communicate directly about a listing. Every conversation is tied to a specific listing.
+
+<Warning>
+  You must be signed in to use messages. Visiting `/chat` without an active session shows a prompt to log in.
+</Warning>
+
+## How chat works
+
+Chats are stored in the Zustand global store under a `chats` map keyed by chat ID. Each chat contains:
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | `string` | Unique identifier in the format `{listingId}-{buyerId}` |
+| `listingId` | `string` | ID of the listing the chat is about |
+| `listingTitle` | `string` | Title of the listing, shown in the chat header |
+| `sellerId` | `string` | User ID of the listing owner |
+| `buyerId` | `string` | User ID of the person who initiated contact |
+| `messages` | `ChatMessage[]` | Array of messages in the conversation |
+
+Each `ChatMessage` contains:
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | `string` | Unique message ID (`msg-{timestamp}`) |
+| `senderId` | `string` | User ID of the sender |
+| `text` | `string` | Message content |
+| `time` | `string` | Formatted timestamp (e.g. `02:45 PM`) |
+
+## Chat ID format
+
+Every chat has a deterministic ID:
+
+```
+{listingId}-{buyerId}
+```
+
+For example, if listing `"5"` is contacted by user `"u3"`, the chat ID is `5-u3`. This means there is at most one conversation per buyer per listing.
+
+## Starting a conversation
+
+You can start a chat from two places:
+
+- The **Chat** button on a listing card in the listings grid
+- The **Contact Seller** button on a listing's detail page
+
+Both buttons route to `/chat/{listingId}-{userId}`. When the chat page loads with a new `chatId`, it calls `getOrCreateChat` to create the conversation in the store if it does not already exist.
+
+<Note>
+  If you click **Chat** or **Contact Seller** on a listing you own, TruequeU routes you to `/chat` (your messages overview) instead of opening a new conversation with yourself.
+</Note>
+
+## The messages page
+
+Navigate to `/chat` to see all your conversations. The page is split into two panels:
+
+<CardGroup cols={2}>
+  <Card title="Chat list sidebar" icon="list">
+    Lists all chats where you are either the buyer or the seller. Each row shows the other person's avatar (from DiceBear), their name, and the last message or the listing title if no messages exist yet.
+  </Card>
+  <Card title="Chat area" icon="message">
+    Displays the full message history for the selected conversation. Your messages appear on the right in indigo; the other person's messages appear on the left in slate.
+  </Card>
+</CardGroup>
+
+## Sending a message
+
+<Steps>
+  <Step title="Open a conversation">
+    Select a chat from the sidebar, or navigate directly to `/chat/{chatId}` from a listing.
+  </Step>
+  <Step title="Type your message">
+    Click the input field at the bottom of the chat area and type your message.
+  </Step>
+  <Step title="Send">
+    Press **Enter** or click **Enviar** to send. The message is added to the store immediately and appears in the conversation.
+  </Step>
+</Steps>
+
+Empty messages (whitespace only) are ignored and will not be sent.
+
+## Persistence
+
+Chats and messages are persisted to `localStorage` via Zustand's `persist` middleware under the key `marketplace-storage`. Your conversations survive page refreshes and browser restarts.

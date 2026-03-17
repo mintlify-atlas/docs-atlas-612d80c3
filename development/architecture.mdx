@@ -1,0 +1,117 @@
+---
+title: 'Architecture'
+description: 'Overview of the TruequeU application architecture, directory structure, and routing.'
+---
+
+## Overview
+
+TruequeU is a client-side single-page application (SPA) built with React. There is no backend — all data is persisted in the browser via `localStorage`. Routing is handled by React Router v7 using the `BrowserRouter` strategy.
+
+## Technology stack
+
+| Layer | Technology |
+| --- | --- |
+| UI framework | React 19 |
+| Routing | React Router v7 |
+| State management | Zustand 5 (with persist middleware) |
+| Styling | Tailwind CSS v4 |
+| Build tool | Vite 8 |
+| Language | TypeScript 5.9 (strict mode) |
+
+## Directory structure
+
+```text
+src/
+├── main.tsx              # Entry point — mounts BrowserRouter + App
+├── App.tsx               # Route definitions and top-level layout
+├── index.css             # Global styles
+├── types.ts              # Shared TypeScript interfaces (Listing, User)
+├── components/
+│   └── layout/
+│       └── Navbar.tsx    # Top navigation bar
+├── pages/
+│   ├── home.tsx          # / — Landing page
+│   ├── listings.tsx      # /listings — Browse all listings
+│   ├── listing-details.tsx  # /listing/:id — Single listing view
+│   ├── create-listing.tsx   # /create — Create a new listing
+│   ├── login.tsx         # /login — Authentication
+│   ├── sign-up.tsx       # /signup — Registration
+│   ├── chat.tsx          # /chat and /chat/:chatId — Messaging
+│   ├── profile.tsx       # /profile — User profile
+│   └── not-found.tsx     # * — 404 fallback
+├── store/
+│   └── useStore.ts       # Zustand store with localStorage persistence
+├── services/
+│   ├── index.ts          # Re-exports all services
+│   ├── auth.service.ts   # Login, registration, password validation
+│   └── listing.service.ts  # Listing form validation
+└── data/
+    └── users.ts          # Hardcoded seed user accounts
+```
+
+## Application layers
+
+**Entry point (`main.tsx`)** 
+Renders the React tree inside `StrictMode`. Wraps the application in `BrowserRouter` to enable client-side routing.
+
+**Layout (`App.tsx`)** 
+Defines the top-level shell: a `flex flex-col min-h-screen` container with `<Navbar>` at the top and a `<main class="flex-1">` region below it. All routes render inside `<main>`.
+
+**Pages (`src/pages/`)** 
+Each file corresponds to one route. Pages are responsible for fetching data from the store, composing components, and handling user interactions specific to that route.
+
+**Components (`src/components/`)** 
+Reusable UI pieces shared across pages. Currently contains the `Navbar` layout component. Components are organized by category (e.g., `layout/`).
+
+**Store (`src/store/`)** 
+A single Zustand store manages all global state: listings, the authenticated user, search query, and chat threads. State is persisted to `localStorage` automatically via the `persist` middleware.
+
+**Services (`src/services/`)** 
+Pure functions that handle business logic — input validation, authentication checks, user registration. Services do not import from the store; they are called by pages and then the result is dispatched to the store.
+
+**Data (`src/data/`)** 
+Static seed data (e.g., `users.ts`) used as a fallback when no localStorage data exists.
+
+**Types (`src/types.ts`)** 
+Centralised TypeScript type definitions shared across the entire application.
+
+## Routes
+
+All routes are defined in `App.tsx` using React Router's `<Routes>` and `<Route>` components:
+
+```typescript
+<Routes>
+  <Route path="/"              element={<Home />} />
+  <Route path="/listings"      element={<Listings />} />
+  <Route path="/listing/:id"   element={<ListingDetail />} />
+  <Route path="/create"        element={<CreateListing />} />
+  <Route path="/login"         element={<Login />} />
+  <Route path="/signup"        element={<Signup />} />
+  <Route path="/chat"          element={<Chat />} />
+  <Route path="/chat/:chatId"  element={<Chat />} />
+  <Route path="/profile"       element={<Profile />} />
+  <Route path="*"              element={<NotFound />} />
+</Routes>
+```
+
+<Note>
+  The `/chat` and `/chat/:chatId` routes both render the same `Chat` component. When no `chatId` param is present, the component shows the conversation list. When a `chatId` is present, it shows the active conversation.
+</Note>
+
+## Data flow
+
+```text
+User interaction
+      │
+      ▼
+   Page component
+      │
+      ├─► Service function  (validate / transform input)
+      │
+      └─► Zustand store action  (update state)
+                │
+                ▼
+         localStorage  (persisted automatically)
+```
+
+Pages call service functions for validation and business logic, then dispatch actions to the Zustand store. The store persists relevant slices to `localStorage` via the `persist` middleware.
